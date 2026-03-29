@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 import datetime
 import joblib
-import pandas as pd
 
 # -------------------------------
 # LOAD MODEL
@@ -89,37 +88,28 @@ def add_sensor_data():
     last_data = list(reversed(last_data))  # oldest → newest
 
     levels = [d.river_level for d in last_data]
-
-    # add current reading
     levels.append(river_level)
-
-    s = pd.Series(levels)
-
-    # SAME LOGIC AS TRAINING
-    rate_of_rise = s.diff().iloc[-1]
-    level_change_3h = s.diff(3).iloc[-1]
-    rolling_avg_6h = s.rolling(6).mean().iloc[-1]
-
-    # handle NaN
-    rate_of_rise = 0 if pd.isna(rate_of_rise) else rate_of_rise
-    level_change_3h = 0 if pd.isna(level_change_3h) else level_change_3h
-    rolling_avg_6h = river_level if pd.isna(rolling_avg_6h) else rolling_avg_6h
-
+    
+    # rate_of_rise = last - previous
+    rate_of_rise = levels[-1] - levels[-2] if len(levels) >= 2 else 0
+    
+    # level_change_3h = last - 3 steps ago
+    level_change_3h = levels[-1] - levels[-4] if len(levels) >= 4 else 0
+    
+    # rolling_avg_6h = average of last 6 levels
+    rolling_avg_6h = sum(levels[-6:]) / min(6, len(levels)) if levels else river_level
+    
     features = {
         "water_level": river_level,
         "rate_of_rise": rate_of_rise,
         "level_change_3h": level_change_3h,
         "rolling_avg_6h": rolling_avg_6h
     }
-
-    # -------------------------------
-    # MODEL PREDICTION
-    # -------------------------------
-    df = pd.DataFrame([features])
-
-    # EXACT ORDER (VERY IMPORTANT)
-    df = df[["water_level", "rate_of_rise", "level_change_3h", "rolling_avg_6h"]]
-
+    
+    # convert to 2D list for model
+    df = [[features["water_level"], features["rate_of_rise"],
+           features["level_change_3h"], features["rolling_avg_6h"]]]
+    
     prob = model.predict_proba(df)[0][1]
     pred_label = int(prob >= threshold)
 
