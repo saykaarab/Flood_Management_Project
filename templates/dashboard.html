@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Flood Monitoring Dashboard</title>
+    <meta http-equiv="refresh" content="5">
+    <style>
+        body {
+            font-family: Arial;
+            background: #eef2f7;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+        }
+
+        .alert {
+            width: 60%;
+            margin: auto;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .high {
+            background: #ff4d4d;
+            color: white;
+        }
+
+        .medium {
+            background: #f1c40f;
+            color: black;
+        }
+
+        .low {
+            background: #2ecc71;
+            color: white;
+        }
+
+        table {
+            margin: auto;
+            border-collapse: collapse;
+            width: 60%;
+            background: white;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background: #3498db;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+    </style>
+
+</head>
+
+
+<body>
+
+    <h1>🌧 AI Flood Monitoring System</h1>
+
+    {% if predictions %}
+
+    {% set latest = predictions[0] %}
+
+    <div class="alert {{ latest.flood_risk|lower }}">
+
+        {% if latest.flood_risk == "High" %}
+        🚨 FLOOD WARNING! High Risk Detected
+        {% else %}
+        🟢 Conditions Normal
+        {% endif %}
+
+    </div>
+
+    {% endif %}
+
+    <h3>Latest Predictions</h3>
+
+    <table>
+
+        <tr>
+            <th>Flood Risk</th>
+            <th>Probability</th>
+            <th>Time</th>
+        </tr>
+
+        {% for p in predictions %}
+
+        <tr>
+
+            <td>{{ p.flood_risk }}</td>
+
+            <td>{{ p.probability }}</td>
+
+            <td>{{ p.timestamp }}</td>
+
+        </tr>
+
+        {% endfor %}
+
+    </table>
+
+</body>
+
+</html>
